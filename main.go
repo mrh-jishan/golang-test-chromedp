@@ -23,7 +23,7 @@ type ud struct {
 }
 
 type merchant struct {
-	name, location, contact string
+	name, location, rating string
 }
 
 func main() {
@@ -41,7 +41,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	write_all_links(ctxt, c, `https://myfave.com/kuala-lumpur/eat`)
+	//write_all_links(ctxt, c, `https://myfave.com/kuala-lumpur/eat`)
 
 	res := read_csv(`result.csv`)
 
@@ -53,7 +53,7 @@ func main() {
 			log.Fatalf("could not list awesome go projects: %v", err)
 		}
 
-		save_data = append(save_data, []string{strconv.Itoa((i + 1)), res.name, res.location})
+		save_data = append(save_data, []string{strconv.Itoa((i + 1)), res.name, res.location, res.rating})
 	}
 
 	write_into_file(save_data, `final_result.csv`)
@@ -174,15 +174,15 @@ func receive_scrap_data(ctxt context.Context, c *chromedp.CDP, sect string, url 
 
 	fmt.Println(`-----------------------merchant location-----------------------------`, marcants_location)
 
-	//// get merchants name
-	//var marcants_contact string
-	//if err := c.Run(ctxt, chromedp.Text(`//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," text ")][contains(concat(" ",normalize-space(@class)," ")," markdown ")]//ul/li/ul/li[contains(text(),"+")]`, &marcants_contact)); err != nil {
-	//	return merchant{}, fmt.Errorf("could not get links: %v", err)
-	//}
-	//
-	//fmt.Println(`-----------------------marcants_contact-----------------------------`, marcants_contact)
+	// get merchants rating
+	var marcants_rating string
+	if err := c.Run(ctxt, chromedp.Text(`//*[contains(concat(" ",normalize-space(@class)," ")," extra ")]//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," label ")][contains(concat(" ",normalize-space(@class)," ")," mini ")][contains(concat(" ",normalize-space(@class)," ")," green ")]`, &marcants_rating)); err != nil {
+		return merchant{}, fmt.Errorf("could not get links: %v", err)
+	}
 
-	return merchant{name: marcants_name, location: marcants_location, contact: `+5457496554458`}, nil
+	fmt.Println(`-----------------------marcants_rating-----------------------------`, marcants_rating)
+
+	return merchant{name: marcants_name, location: marcants_location, rating: marcants_rating}, nil
 }
 
 func write_into_file(data [][]string, file_name string) {
