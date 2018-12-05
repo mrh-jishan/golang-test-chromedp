@@ -26,16 +26,7 @@ type marcent struct {
 
 func main() {
 
-	x_path_product := `.//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," vertical ")][contains(concat(" ",normalize-space(@class)," ")," segment ")][contains(concat(" ",normalize-space(@class)," ")," page ")][contains(concat(" ",normalize-space(@class)," ")," no ")][contains(concat(" ",normalize-space(@class)," ")," padding ")][contains(concat(" ",normalize-space(@class)," ")," borderless ")]`
-	open_browser(x_path_product)
-}
-
-func visit_page(url string) marcent {
-	var res marcent
-	return res
-}
-
-func open_browser(x_path string) {
+	x_path := `.//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," vertical ")][contains(concat(" ",normalize-space(@class)," ")," segment ")][contains(concat(" ",normalize-space(@class)," ")," page ")][contains(concat(" ",normalize-space(@class)," ")," no ")][contains(concat(" ",normalize-space(@class)," ")," padding ")][contains(concat(" ",normalize-space(@class)," ")," borderless ")]`
 	var err error
 
 	// create context
@@ -54,49 +45,21 @@ func open_browser(x_path string) {
 	var save_data_marcent []marcent
 
 	for i := 0; i < len(res); i++ {
-		fmt.Println(res[i].URL)
 		res, err := receive_scrap_data(ctxt, c, x_path, res[i].URL)
 		if err != nil {
 			log.Fatalf("could not list awesome go projects: %v", err)
 		}
 
-		fmt.Println(res)
 		save_data_marcent = append(save_data_marcent, res)
-
-		//var save_data [][]string
-		//
-		//for _, value := range res {
-		//	save_data = append(save_data, []string{value.URL, value.Description})
-		//	write_into_file(save_data)
-		//}
-		//
-		//write_into_file(save_data)
 
 	}
 	var save_data [][]string
 	for _, value := range save_data_marcent {
 		save_data = append(save_data, []string{value.name, value.location})
-		write_into_file(save_data)
+		//write_into_file(save_data)
 	}
 
 	write_into_file(save_data)
-
-	// list awesome go projects for the "Selenium and browser control tools."
-	//res, err := receive_scrap_data(ctxt, c, x_path, url)
-	//if err != nil {
-	//	log.Fatalf("could not list awesome go projects: %v", err)
-	//}
-	//
-	//fmt.Println(res)
-
-	//var save_data [][]string
-	//
-	//for _, value := range res {
-	//	save_data = append(save_data, []string{value.URL, value.Description})
-	//	write_into_file(save_data)
-	//}
-	//
-	//write_into_file(save_data)
 
 	// shutdown chrome
 	err = c.Shutdown(ctxt)
@@ -109,11 +72,6 @@ func open_browser(x_path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	//// output the values
-	//for k, v := range res {
-	//	log.Printf("project %s (%s): '%s'", k, v.URL, v.Description)
-	//}
 }
 
 //scrap the page
@@ -158,34 +116,6 @@ func receive_scrap_data(ctxt context.Context, c *chromedp.CDP, sect string, url 
 	//}
 	//
 	//fmt.Println(`-----------------------marcants_contact-----------------------------`, marcants_contact)
-
-	//// get project link Nodes
-	//var projects []*cdp.Node
-	//if err := c.Run(ctxt, chromedp.Nodes(sel+`//a/h3/text()`, &projects)); err != nil {
-	//	return marcent{}, fmt.Errorf("could not get projects: %v", err)
-	//}
-	//
-	//// get links text
-	//var links []*cdp.Node
-	//if err := c.Run(ctxt, chromedp.Nodes(sel+`//a`, &links)); err != nil {
-	//	return marcent{}, fmt.Errorf("could not get links: %v", err)
-	//}
-	//
-	//// get description text
-	//var descriptions []*cdp.Node
-	//if err := c.Run(ctxt, chromedp.Nodes(sel+`//a/h3/text()`, &descriptions)); err != nil {
-	//	return marcent{}, fmt.Errorf("could not get descriptions: %v", err)
-	//}
-
-	// process data
-	//res := make(map[string]ud)
-	//for i := 0; i < len(projects); i++ {
-	//	res[projects[i].NodeValue] = ud{
-	//		URL:         url + links[i].AttributeValue("href"),
-	//		Description: descriptions[i].NodeValue,
-	//	}
-	//
-	//}
 
 	return marcent{name: marcants_name, location: marcants_location, contact: `+5457496554458`}, nil
 }
