@@ -58,7 +58,7 @@ func main() {
 
 	}
 
-	write_into_file(save_data, file_name)
+	write_into_file(save_data, `final_result.csv`)
 
 	// shutdown chrome
 	err = c.Shutdown(ctxt)
