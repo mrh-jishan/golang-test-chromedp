@@ -22,7 +22,7 @@ type ud struct {
 	URL, Description string
 }
 
-type marcent struct {
+type merchant struct {
 	name, location, contact string
 }
 
@@ -43,8 +43,7 @@ func main() {
 
 	write_all_links(ctxt, c, `https://myfave.com/kuala-lumpur/eat`)
 
-	file_name := `result.csv`
-	res := read_csv(file_name)
+	res := read_csv(`result.csv`)
 
 	var save_data [][]string
 
@@ -55,7 +54,6 @@ func main() {
 		}
 
 		save_data = append(save_data, []string{strconv.Itoa((i + 1)), res.name, res.location})
-
 	}
 
 	write_into_file(save_data, `final_result.csv`)
@@ -142,7 +140,7 @@ func listAwesomeGoProjects(ctxt context.Context, c *chromedp.CDP, sect string, u
 }
 
 //scrap the page
-func receive_scrap_data(ctxt context.Context, c *chromedp.CDP, sect string, url string) (m marcent, error error) {
+func receive_scrap_data(ctxt context.Context, c *chromedp.CDP, sect string, url string) (m merchant, error error) {
 	// force max timeout of 15 seconds for retrieving and processing the data
 	var cancel func()
 	ctxt, cancel = context.WithTimeout(ctxt, 25*time.Second)
@@ -152,39 +150,39 @@ func receive_scrap_data(ctxt context.Context, c *chromedp.CDP, sect string, url 
 
 	// navigate
 	if err := c.Run(ctxt, chromedp.Navigate(url)); err != nil {
-		return marcent{}, fmt.Errorf("could not navigate to github: %v", err)
+		return merchant{}, fmt.Errorf("could not navigate to github: %v", err)
 	}
 
 	// wait visible
 	if err := c.Run(ctxt, chromedp.WaitVisible(sel)); err != nil {
-		return marcent{}, fmt.Errorf("could not get section: %v", err)
+		return merchant{}, fmt.Errorf("could not get section: %v", err)
 	}
 
 	// get merchants name
 	var marcants_name string
 	if err := c.Run(ctxt, chromedp.Text(sel+`//a[contains(concat(" ",normalize-space(@class)," ")," header ")]`, &marcants_name)); err != nil {
-		return marcent{}, fmt.Errorf("could not get links: %v", err)
+		return merchant{}, fmt.Errorf("could not get links: %v", err)
 	}
 
-	fmt.Println(`------------------marcent name----------------------------------`, marcants_name)
+	fmt.Println(`------------------merchant name----------------------------------`, marcants_name)
 
 	// get merchants name
 	var marcants_location string
 	if err := c.Run(ctxt, chromedp.Text(sel+`//h3[contains(concat(" ",normalize-space(@class)," ")," is-meta ")]`, &marcants_location)); err != nil {
-		return marcent{}, fmt.Errorf("could not get links: %v", err)
+		return merchant{}, fmt.Errorf("could not get links: %v", err)
 	}
 
-	fmt.Println(`-----------------------marcent location-----------------------------`, marcants_location)
+	fmt.Println(`-----------------------merchant location-----------------------------`, marcants_location)
 
 	//// get merchants name
 	//var marcants_contact string
 	//if err := c.Run(ctxt, chromedp.Text(`//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," text ")][contains(concat(" ",normalize-space(@class)," ")," markdown ")]//ul/li/ul/li[contains(text(),"+")]`, &marcants_contact)); err != nil {
-	//	return marcent{}, fmt.Errorf("could not get links: %v", err)
+	//	return merchant{}, fmt.Errorf("could not get links: %v", err)
 	//}
 	//
 	//fmt.Println(`-----------------------marcants_contact-----------------------------`, marcants_contact)
 
-	return marcent{name: marcants_name, location: marcants_location, contact: `+5457496554458`}, nil
+	return merchant{name: marcants_name, location: marcants_location, contact: `+5457496554458`}, nil
 }
 
 func write_into_file(data [][]string, file_name string) {
