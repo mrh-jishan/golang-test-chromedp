@@ -7,9 +7,11 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"github.com/chromedp/cdproto/cdp"
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -26,7 +28,7 @@ type marcent struct {
 
 func main() {
 
-	x_path := `.//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," vertical ")][contains(concat(" ",normalize-space(@class)," ")," segment ")][contains(concat(" ",normalize-space(@class)," ")," page ")][contains(concat(" ",normalize-space(@class)," ")," no ")][contains(concat(" ",normalize-space(@class)," ")," padding ")][contains(concat(" ",normalize-space(@class)," ")," borderless ")]`
+	x_path_products := `.//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," vertical ")][contains(concat(" ",normalize-space(@class)," ")," segment ")][contains(concat(" ",normalize-space(@class)," ")," page ")][contains(concat(" ",normalize-space(@class)," ")," no ")][contains(concat(" ",normalize-space(@class)," ")," padding ")][contains(concat(" ",normalize-space(@class)," ")," borderless ")]`
 	var err error
 
 	// create context
@@ -39,27 +41,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	write_all_links(ctxt, c, `https://myfave.com/kuala-lumpur/eat`)
+
 	file_name := `result.csv`
 	res := read_csv(file_name)
 
-	var save_data_marcent []marcent
+	var save_data [][]string
 
 	for i := 0; i < len(res); i++ {
-		res, err := receive_scrap_data(ctxt, c, x_path, res[i].URL)
+		res, err := receive_scrap_data(ctxt, c, x_path_products, res[i].URL)
 		if err != nil {
 			log.Fatalf("could not list awesome go projects: %v", err)
 		}
 
-		save_data_marcent = append(save_data_marcent, res)
+		save_data = append(save_data, []string{strconv.Itoa((i + 1)), res.name, res.location})
 
 	}
-	var save_data [][]string
-	for _, value := range save_data_marcent {
-		save_data = append(save_data, []string{value.name, value.location})
-		//write_into_file(save_data)
-	}
 
-	write_into_file(save_data)
+	write_into_file(save_data, file_name)
 
 	// shutdown chrome
 	err = c.Shutdown(ctxt)
@@ -72,6 +71,74 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func write_all_links(ctxt context.Context, c *chromedp.CDP, url string) {
+	x_path := `.//*[contains(concat(" ",normalize-space(@class)," ")," ui ")][contains(concat(" ",normalize-space(@class)," ")," segments ")][contains(concat(" ",normalize-space(@class)," ")," categories ")][contains(concat(" ",normalize-space(@class)," ")," section ")]//*[contains(concat(" ",normalize-space(@class)," ")," column ")]`
+
+	// list awesome go projects for the "Selenium and browser control tools."
+	res, err := listAwesomeGoProjects(ctxt, c, x_path, url)
+	if err != nil {
+		log.Fatalf("could not list awesome go projects: %v", err)
+	}
+
+	var save_data [][]string
+
+	for _, value := range res {
+		save_data = append(save_data, []string{value.URL, value.Description})
+		//write_into_file(save_data)
+	}
+
+	write_into_file(save_data, `result.csv`)
+}
+
+func listAwesomeGoProjects(ctxt context.Context, c *chromedp.CDP, sect string, url string) (map[string]ud, error) {
+	// force max timeout of 15 seconds for retrieving and processing the data
+	var cancel func()
+	ctxt, cancel = context.WithTimeout(ctxt, 25*time.Second)
+	defer cancel()
+
+	sel := fmt.Sprintf(sect)
+
+	// navigate
+	if err := c.Run(ctxt, chromedp.Navigate(url)); err != nil {
+		return nil, fmt.Errorf("could not navigate to github: %v", err)
+	}
+
+	// wait visible
+	if err := c.Run(ctxt, chromedp.WaitVisible(sel)); err != nil {
+		return nil, fmt.Errorf("could not get section: %v", err)
+	}
+
+	// get project link Nodes
+	var projects []*cdp.Node
+	if err := c.Run(ctxt, chromedp.Nodes(sel+`//a/h3/text()`, &projects)); err != nil {
+		return nil, fmt.Errorf("could not get projects: %v", err)
+	}
+
+	// get links text
+	var links []*cdp.Node
+	if err := c.Run(ctxt, chromedp.Nodes(sel+`//a`, &links)); err != nil {
+		return nil, fmt.Errorf("could not get links: %v", err)
+	}
+
+	// get description text
+	var descriptions []*cdp.Node
+	if err := c.Run(ctxt, chromedp.Nodes(sel+`//a/h3/text()`, &descriptions)); err != nil {
+		return nil, fmt.Errorf("could not get descriptions: %v", err)
+	}
+
+	// process data
+	res := make(map[string]ud)
+	for i := 0; i < len(projects); i++ {
+		res[projects[i].NodeValue] = ud{
+			URL:         `https://myfave.com` + links[i].AttributeValue("href"),
+			Description: descriptions[i].NodeValue,
+		}
+
+	}
+
+	return res, nil
 }
 
 //scrap the page
@@ -120,9 +187,9 @@ func receive_scrap_data(ctxt context.Context, c *chromedp.CDP, sect string, url 
 	return marcent{name: marcants_name, location: marcants_location, contact: `+5457496554458`}, nil
 }
 
-func write_into_file(data [][]string) {
+func write_into_file(data [][]string, file_name string) {
 	//Create output file
-	file, err := os.Create("result2.csv")
+	file, err := os.Create(file_name)
 	checkError("Cannot create file", err)
 	defer file.Close()
 
